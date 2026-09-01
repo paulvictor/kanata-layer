@@ -29,5 +29,9 @@
               }
             ];
           };
-        });
+        }) // {
+      overlays.default = final: prev: {
+        kanata-layer = self.packages.${final.system}.default;
+      };
+    };
 }
