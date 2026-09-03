@@ -16,6 +16,16 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]])
 
+(defn ->waybarStatus [line]
+  (let [new-layer
+        (-> line
+            (json/read-str :key-fn keyword)
+            (get-in [:LayerChange :new])
+            )]
+    (if (some? new-layer)
+         [(assoc {} "text" new-layer "alt" new-layer)]
+         [])))
+
 (defn -main
   [& args]
   (let [cli-opts (:options (parse-opts args cli-options-spec))]
@@ -26,10 +36,7 @@
         (->> #(.readLine reader)
              repeatedly
              (take-while some?)
-             (map #(json/read-str % :key-fn keyword))
-             (map #(get-in % [:LayerChange :new] nil))
-             (filter some?)
-             (map #(assoc {} "text" % "alt" %))
+             (mapcat #'->waybarStatus)
              (run! (fn [m]
                      (json/write m out)
                      (.write out (int \newline))
