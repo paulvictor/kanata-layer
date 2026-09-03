@@ -17,14 +17,12 @@
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]])
 
 (defn ->waybarStatus [line]
-  (let [new-layer
-        (-> line
-            (json/read-str :key-fn keyword)
-            (get-in [:LayerChange :new])
-            )]
-    (if (some? new-layer)
-         [(assoc {} "text" new-layer "alt" new-layer)]
-         [])))
+  (-> line
+      (json/read-str :key-fn keyword)
+      (get-in [:LayerChange :new])
+      (as-> new-layer
+          (when new-layer
+            (assoc {} "text" new-layer "alt" new-layer)))))
 
 (defn -main
   [& args]
@@ -36,7 +34,7 @@
         (->> #(.readLine reader)
              repeatedly
              (take-while some?)
-             (mapcat #'->waybarStatus)
+             (keep #'->waybarStatus)
              (run! (fn [m]
                      (json/write m out)
                      (.write out (int \newline))
